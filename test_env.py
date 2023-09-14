@@ -1,7 +1,7 @@
 import gymnasium as gym
 import multigrid.envs
 
-env = gym.make('MultiGrid-Empty-8x8-v0', agents=2, render_mode='human')
+env = gym.make('MultiGrid-Custom-v0', agents=1, render_mode='human', autoreset=True)
 
 observations, infos = env.reset()
 while not env.is_done():
