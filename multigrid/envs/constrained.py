@@ -3,7 +3,7 @@ from multigrid.core import Grid
 from multigrid.core.constants import Direction
 from multigrid.core.world_object import Goal, Wall
 
-class CustomEnv(MultiGridEnv):
+class ConstrainedEnv(MultiGridEnv):
    def __init__(
          self,
          agent_start_pos = (1, 1),

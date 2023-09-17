@@ -34,7 +34,7 @@ from .empty import EmptyEnv
 from .locked_hallway import LockedHallwayEnv
 from .playground import PlaygroundEnv
 from .redbluedoors import RedBlueDoorsEnv
-from .custom import CustomEnv
+from .constrained import ConstrainedEnv
 
 CONFIGURATIONS = {
     'MultiGrid-BlockedUnlockPickup-v0': (BlockedUnlockPickupEnv, {}),
@@ -50,7 +50,7 @@ CONFIGURATIONS = {
     'MultiGrid-Playground-v0': (PlaygroundEnv, {}),
     'MultiGrid-RedBlueDoors-6x6-v0': (RedBlueDoorsEnv, {'size': 6}),
     'MultiGrid-RedBlueDoors-8x8-v0': (RedBlueDoorsEnv, {'size': 8}),
-    'MultiGrid-Custom-v0': (CustomEnv, {})
+    'MultiGrid-Constrained-v0': (ConstrainedEnv, {})
 }
 
 # Register environments with gymnasium
