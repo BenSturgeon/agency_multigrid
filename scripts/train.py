@@ -149,7 +149,10 @@ def algorithm_config(
             lr=(lr or NotProvided),
             vf_loss_coeff=0.5,
             entropy_coeff=0.001,
+            _enable_learner_api=False,
+            
         )
+        .rl_module(_enable_rl_module_api=False)  # Add this line
         .debugging(seed=random.randint(0, int(1e6)))
     )
 

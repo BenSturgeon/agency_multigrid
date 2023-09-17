@@ -71,3 +71,23 @@ To cite this project please use:
   year = {2023},
 }
 ```
+
+
+# Todo
+ Implement custom training regime in a new environment:
+ 
+ class CustomMultiGridEnv(MultiGridEnv):
+    def step(self, action):
+        obs, reward, done, info = super().step(action)
+
+        # Modify the reward based on the agent
+        for agent_id in reward:
+            if agent_id == 0:
+                reward[agent_id] *= 2  # Double the reward for agent 0
+            elif agent_id == 1:
+                reward[agent_id] /= 2  # Halve the reward for agent 1
+
+        return obs, reward, done, info
+
+Either create a wrapper to extract the observations from a specific agent or cycle through agents in a multigrid env. 
+We will basically just be working with multi agent envs, so focus on that for now. 
