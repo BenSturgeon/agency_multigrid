@@ -2,12 +2,13 @@ from multigrid import MultiGridEnv
 from multigrid.core import Grid
 from multigrid.core.constants import Direction
 from multigrid.core.world_object import Goal, Wall
-
+import numpy as np
 class ConstrainedEnv(MultiGridEnv):
+   metadata = {'render.modes': ['human', 'rgb_array']}
    def __init__(
          self,
-         agent_start_pos = (1, 1),
-         agent_start_dir = Direction.right,
+         agent_start_pos = [(1, 1), (5, 3)],
+         agent_start_dir = [Direction.right, Direction.right],
          joint_reward: bool = False,
          success_termination_mode: str = 'any',
          **kwargs):
@@ -20,10 +21,13 @@ class ConstrainedEnv(MultiGridEnv):
       width = 10,
       height = 5,
       max_steps= 20,
+      agents=2,
       joint_reward=joint_reward,
       success_termination_mode=success_termination_mode,
       **kwargs,
         )
+      self.agent_start_pos = agent_start_pos
+      self.agent_start_dir = agent_start_dir
    
    def _gen_grid(self, width, height):
       """
@@ -46,9 +50,13 @@ class ConstrainedEnv(MultiGridEnv):
 
 
       # Place the agent
-      for agent in self.agents:
-         if self.agent_start_pos is not None and self.agent_start_dir is not None:
-               agent.state.pos = self.agent_start_pos
-               agent.state.dir = self.agent_start_dir
-         else:
-               self.place_agent(agent)
+      for i, agent in enumerate(self.agents):
+            if self.agent_start_pos[i] is not None and self.agent_start_dir[i] is not None:
+                  agent.state.pos = self.agent_start_pos[i]
+                  agent.state.dir = self.agent_start_dir[i]
+            else:
+                  self.place_agent(agent)
+
+      def render(self, mode="human"):
+        img = np.random.randint(0, 256, size=(64, 64, 3), dtype=np.uint8)
+        return img

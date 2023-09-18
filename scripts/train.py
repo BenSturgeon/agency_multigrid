@@ -5,6 +5,7 @@ import json
 import os
 import random
 import ray
+import pickle
 
 from multigrid.rllib.models import TFModel, TorchModel, TorchLSTMModel
 from pathlib import Path
@@ -132,11 +133,11 @@ def algorithm_config(
     """
     Return the RL algorithm configuration dictionary.
     """
-    env_config = {**env_config, 'agents': num_agents}
+    env_config = {**env_config, 'agents': num_agents, "monitor": True,}
     return (
         get_trainable_cls(algo)
         .get_default_config()
-        .environment(env=env, env_config=env_config)
+        .environment(env=env, env_config=env_config, render_env=True)
         .framework(framework)
         .rollouts(num_rollout_workers=num_workers)
         .resources(num_gpus=num_gpus if can_use_gpu() else 0)
@@ -223,4 +224,6 @@ if __name__ == "__main__":
     print('\n', '-' * 64, '\n', "Training with following configuration:", '\n', '-' * 64)
     print()
     pprint(config.to_dict())
+    with open('~/content/multigrid/train_config.pkl', 'wb') as f:
+        pickle.dump(config, f)
     train(args.algo, config, stop_conditions, args.save_dir, args.load_dir)

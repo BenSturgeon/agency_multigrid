@@ -11,7 +11,7 @@ import matplotlib.animation as animation
 from tqdm import tqdm
 import torch.nn as nn
 from itertools import count
-
+from features_extractor import MinigridFeaturesExtractor
 
 import torch as T
 from torch import optim
@@ -66,9 +66,10 @@ class Agent():
         n_actions = env.action_space.n
         state, info = env.reset()
         n_observations = len(state)
+        n_actions = env.action_space.n
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
-        self.policy_network =  network(n_observations = n_observations, n_actions=n_actions).to(self.device)
-        self.target_network = network(n_observations = n_observations, n_actions=n_actions).to(self.device)
+        self.policy_network =  MinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
+        self.target_network = MinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
         self.memory = replay_memory(100000)
         self.steps_done = 0
@@ -95,10 +96,10 @@ class Agent():
 
     
     def save_checkpoint(self):
-        T.save(self.network.state_dict(), self.chkpt_file)
+        T.save(self.policy_network.state_dict(), self.chkpt_file)
 
     def load_checkpoint(self):
-        self.load_state_dict(T.load(self.chkpt_file))
+        self.policy_network.load_state_dict(T.load(self.chkpt_file))
         
     
     def select_action(self, state):
@@ -227,7 +228,7 @@ class Agent():
         for i_episode in pbar:
             # Initialize the environment and get it's state
             state, info = env.reset()
-            state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+            state = torch.tensor(state['image'], dtype=torch.float32, device=device).unsqueeze(0)
             accumulated_reward = 0
             for t in count():
                 action = self.select_action(state)
@@ -239,7 +240,7 @@ class Agent():
                 if terminated:
                     next_state = None
                 else:
-                    next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+                    next_state = torch.tensor(observation['image'], dtype=torch.float32, device=device).unsqueeze(0)
 
                 # Store the transition in memory
                 self.memory.push(state, action, next_state, reward)
@@ -293,14 +294,7 @@ class Agent():
 
 
 if __name__ == "__main__":
-    env = gym.make(
-        "LunarLander-v2",
-        continuous = False,
-        gravity = -10.0,
-        enable_wind = False,
-        wind_power = 15.0,
-        turbulence_power = 1.5
-    )
+    env = gym.make("MiniGrid-Empty-6x6-v0", render_mode="rgb_array")
     agent = Agent(env)
     agent.train(20,env)
     print("we did it")
