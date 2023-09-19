@@ -133,7 +133,7 @@ def algorithm_config(
     """
     Return the RL algorithm configuration dictionary.
     """
-    env_config = {**env_config, 'agents': num_agents, "monitor": True,}
+    env_config = {**env_config, 'agents': num_agents}
     return (
         get_trainable_cls(algo)
         .get_default_config()

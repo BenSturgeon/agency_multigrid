@@ -4,7 +4,7 @@ from multigrid.core.constants import Direction
 from multigrid.core.world_object import Goal, Wall
 import numpy as np
 class ConstrainedEnv(MultiGridEnv):
-   metadata = {'render.modes': ['human', 'rgb_array']}
+           
    def __init__(
          self,
          agent_start_pos = [(1, 1), (5, 3)],
@@ -15,13 +15,17 @@ class ConstrainedEnv(MultiGridEnv):
       
       self.agent_start_pos = agent_start_pos
       self.agent_start_dir = agent_start_dir
+      self.metadata = {
+            'render.modes': ['human', 'rgb_array'],
+            'video.frames_per_second': 50,
+            'render_fps': 30,  # Add this line
+        }
 
       super().__init__(
       mission_space="get to the green goal square, you rascal",
       width = 10,
       height = 5,
       max_steps= 20,
-      agents=2,
       joint_reward=joint_reward,
       success_termination_mode=success_termination_mode,
       **kwargs,
