@@ -120,6 +120,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--num-episodes', type=int, default=10, help="Number of episodes to visualize.")
     parser.add_argument(
+        '--max-steps', type=int, default=20,
+        help="Maximum number of steps per episode.")
+    parser.add_argument(
         '--load-dir', type=str,
         help="Checkpoint directory for loading pre-trained policies.")
     parser.add_argument(

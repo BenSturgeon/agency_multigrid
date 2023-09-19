@@ -1,7 +1,7 @@
 from multigrid import MultiGridEnv
 from multigrid.core import Grid
 from multigrid.core.constants import Direction
-from multigrid.core.world_object import Goal, Wall
+from multigrid.core.world_object import Goal, Wall, Door, Key
 import numpy as np
 class ConstrainedEnv(MultiGridEnv):
            
@@ -11,6 +11,7 @@ class ConstrainedEnv(MultiGridEnv):
          agent_start_dir = [Direction.right, Direction.right],
          joint_reward: bool = False,
          success_termination_mode: str = 'any',
+         max_steps: int = 100,
          **kwargs):
       
       self.agent_start_pos = agent_start_pos
@@ -25,11 +26,12 @@ class ConstrainedEnv(MultiGridEnv):
       mission_space="get to the green goal square, you rascal",
       width = 10,
       height = 5,
-      max_steps= 20,
+      max_steps= max_steps,
       joint_reward=joint_reward,
       success_termination_mode=success_termination_mode,
       **kwargs,
         )
+      print(f"{self.max_steps=}")
       self.agent_start_pos = agent_start_pos
       self.agent_start_dir = agent_start_dir
    
@@ -44,13 +46,17 @@ class ConstrainedEnv(MultiGridEnv):
       self.grid.wall_rect(0, 0, width, height)
 
       # Place a goal square in the bottom-right corner
-      self.put_obj(Goal(), width-4, height-3)
+      self.put_obj(Goal(), width-2, height-4)
 
       # Placing barriers
       self.put_obj(Wall(), width-6, height-2)
       self.put_obj(Wall(), width-6, height-4)
       self.put_obj(Wall(), width-3, height-3)
       self.put_obj(Wall(), width-3, height-4)
+
+      self.put_obj(Door('yellow', is_locked=True), 4, 2)
+      self.put_obj(Key('yellow'), 6, 1)
+
 
 
       # Place the agent
@@ -64,3 +70,6 @@ class ConstrainedEnv(MultiGridEnv):
       def render(self, mode="human"):
         img = np.random.randint(0, 256, size=(64, 64, 3), dtype=np.uint8)
         return img
+      
+
+
