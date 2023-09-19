@@ -224,6 +224,4 @@ if __name__ == "__main__":
     print('\n', '-' * 64, '\n', "Training with following configuration:", '\n', '-' * 64)
     print()
     pprint(config.to_dict())
-    with open('~/content/multigrid/train_config.pkl', 'wb') as f:
-        pickle.dump(config, f)
     train(args.algo, config, stop_conditions, args.save_dir, args.load_dir)
