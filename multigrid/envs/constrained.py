@@ -3,6 +3,8 @@ from multigrid.core import Grid
 from multigrid.core.constants import Direction
 from multigrid.core.world_object import Goal, Wall, Door, Key
 import numpy as np
+from multigrid.core.reward_functions import *
+
 class ConstrainedEnv(MultiGridEnv):
            
    def __init__(
@@ -24,6 +26,7 @@ class ConstrainedEnv(MultiGridEnv):
 
       super().__init__(
       mission_space="get to the green goal square, you rascal",
+      
       width = 10,
       height = 5,
       max_steps= max_steps,
@@ -32,6 +35,7 @@ class ConstrainedEnv(MultiGridEnv):
       **kwargs,
         )
       print(f"{self.max_steps=}")
+      self.step_count = 0
       self.agent_start_pos = agent_start_pos
       self.agent_start_dir = agent_start_dir
    
@@ -114,7 +118,7 @@ class ConstrainedEnv(MultiGridEnv):
             if i == 1:
                   # Define the reward function for the second agent
                   # For example, give a reward of -1 for each step to encourage the agent to reach the goal as quickly as possible
-                  reward = -1
+                  reward = 1 - 0.9 * (self.step_count / self.max_steps)
             else:
                   # Define the reward function for the other agents
                   reward = 1 - 0.9 * (self.step_count / self.max_steps)

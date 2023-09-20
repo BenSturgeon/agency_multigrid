@@ -78,7 +78,7 @@ def visualize(
         initial_state = env.reset()
         
         # Take an action in the copied environment
-        _, _, _, _ = env_copy.step({agent_id: env.action_space.sample() for agent_id in env.get_agent_ids()})
+        _, _, _, _, _ = env_copy.step({agent_id: env.action_space.sample() for agent_id in env.get_agent_ids()})
         
         # Check if the original environment state has changed
         final_state = env.reset()  # Replace this with how you retrieve the current state
