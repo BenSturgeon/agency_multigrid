@@ -5,6 +5,7 @@ import math
 import numpy as np
 import pygame
 import pygame.freetype
+import cv2
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -30,7 +31,10 @@ from .utils.random import RandomMixin
 AgentID = int
 ObsType = dict[str, Any]
 
-
+font = cv2.FONT_HERSHEY_SIMPLEX
+fontScale = 0.5
+fontColor = (255, 255, 255)  # white
+lineType = 1
 
 ### Environment
 
@@ -700,7 +704,7 @@ class MultiGridEnv(gym.Env, RandomMixin, ABC):
             "POV rendering not supported for multiagent environments."
         )
 
-    def get_full_render(self, highlight: bool, tile_size: int):
+    def get_full_render(self, highlight: bool, tile_size: int, step: int = None):
         """
         Render a non-partial observation for visualization.
         """
@@ -748,12 +752,15 @@ class MultiGridEnv(gym.Env, RandomMixin, ABC):
             agents=self.agents,
             highlight_mask=highlight_mask if highlight else None,
         )
+        if step is not None: 
+            cv2.putText(img, "Step: f{step}", (5, 20), font, fontScale, fontColor, lineType)
 
         return img
 
     def get_frame(
         self,
         highlight: bool = True,
+        show_step: bool = True,
         tile_size: int = TILE_PIXELS,
         agent_pov: bool = False) -> ndarray[np.uint8]:
         """
@@ -776,7 +783,7 @@ class MultiGridEnv(gym.Env, RandomMixin, ABC):
         if agent_pov:
             return self.get_pov_render(tile_size)
         else:
-            return self.get_full_render(highlight, tile_size)
+            return self.get_full_render(highlight, tile_size, show_step)
 
     def render(self):
         """
