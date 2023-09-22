@@ -89,22 +89,3 @@ def estimate_entropic_choice_multi_agent(env, policies, n_steps=3, n_samples=100
 def immediate_choice(env, policies, n_samples=100):
     return estimate_entropic_choice(env, policies, n_steps=1, n_samples=n_samples)
 
-# Sample transition probabilities for demonstration (state -> next_state -> probability)
-# In the format {current_state: {next_state1: prob1, next_state2: prob2, ...}, ...}
-sample_transition_probs = {
-    'A': {'A': 0.1, 'B': 0.4, 'C': 0.5},
-    'B': {'A': 0.3, 'B': 0.3, 'C': 0.4},
-    'C': {'A': 0.2, 'B': 0.2, 'C': 0.6}
-}
-
-# Test the functions
-current_state = 'A'
-n_steps = 2
-
-dc_result = discrete_choice(sample_transition_probs, current_state, n_steps)
-ec_result = entropic_choice(sample_transition_probs, current_state, n_steps)
-ic_result = immediate_choice(sample_transition_probs, current_state)
-
-dc_result, ec_result, ic_result
-
-
