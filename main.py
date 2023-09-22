@@ -1,6 +1,7 @@
 import gymnasium as gym
 import multigrid.envs
 import time
+import nbimporter
 from imageio import mimsave
 from PPO import MinigridFeaturesExtractor
 from stable_baselines3 import PPO
@@ -11,7 +12,7 @@ def main():
       features_extractor_class=MinigridFeaturesExtractor,
       features_extractor_kwargs=dict(features_dim=128),
       )
-   env = gym.make('MultiGrid-Custom-v0', agents=1, render_mode='rgb_array', autoreset=True)
+   env = gym.make('MultiGrid-Empty-6x6-v0', render_mode='rgb_array')
    env = ImgObsWrapper(env)
 
    delay_seconds = 0.5
