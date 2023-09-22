@@ -87,7 +87,7 @@ def estimate_entropic_choice_multi_agent(env, policies, n_steps=3, n_samples=100
 
 # Immediate Choice Function
 def immediate_choice(env, policies, n_samples=100):
-    return estimate_entropic_choice(env, policies, n_steps=1, n_samples)
+    return estimate_entropic_choice(env, policies, n_steps=1, n_samples=n_samples)
 
 # Sample transition probabilities for demonstration (state -> next_state -> probability)
 # In the format {current_state: {next_state1: prob1, next_state2: prob2, ...}, ...}
