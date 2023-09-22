@@ -24,4 +24,4 @@ def immediate_choice(self, policy, state):
     return entropy
 
 def entropic_choice(self, policy, state, n):
-    
+    continue
