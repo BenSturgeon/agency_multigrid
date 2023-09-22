@@ -3,7 +3,8 @@ from multigrid.core import Grid
 from multigrid.core.constants import Direction
 from multigrid.core.world_object import Goal, Wall, Door, Key
 import numpy as np
-from multigrid.core.reward_functions import *
+from multigrid.core.reward_functions import estimate_entropic_choice_multi_agent
+
 
 class ConstrainedEnv(MultiGridEnv):
            
@@ -118,6 +119,8 @@ class ConstrainedEnv(MultiGridEnv):
             if i == 1:
                   # Define the reward function for the second agent
                   # For example, give a reward of -1 for each step to encourage the agent to reach the goal as quickly as possible
+                  env_copy = copy.deepcopy(self)
+                  # estimate_entropic_choice_multi_agent(env_copy, agent.)
                   reward = 1 - 0.9 * (self.step_count / self.max_steps)
             else:
                   # Define the reward function for the other agents
