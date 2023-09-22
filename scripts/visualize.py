@@ -91,7 +91,7 @@ def visualize(
             for agent_id in rewards:
                 episode_rewards[agent_id] += rewards[agent_id]
 
-        frames.append(env.get_frame())
+        frames.append(env.get_frame(algorithm.config.highlight))
         print('Rewards:', episode_rewards)
 
     env.close()
@@ -127,6 +127,9 @@ if __name__ == '__main__':
         help="Checkpoint directory for loading pre-trained policies.")
     parser.add_argument(
         '--gif', type=str, help="Store output as GIF at given path.")
+    parser.add_argument(
+        '--highlight', type=bool, help="Show the cells in the grid which the agents can see during visualisation."
+    )
 
     args = parser.parse_args()
     args.env_config.update(render_mode='human')
