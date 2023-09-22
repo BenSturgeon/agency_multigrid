@@ -63,7 +63,7 @@ def estimate_entropic_choice_multi_agent(env, policies, n_steps=3, n_samples=100
         # Rollout for n_steps to collect states
         states = env.reset()
         for _ in range(n_steps):
-            actions = {agent_id: policy(states[agent_id]) for agent_id, policy in policies.items()}
+            actions = {agent_id: policy.compute_single_action(states[agent_id])[0] for agent_id, policy in policies.items()}
             next_states, _, _, _ = env.step(actions)
             
             # Increment state visit frequency for agent '0'

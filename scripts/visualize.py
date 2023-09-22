@@ -69,7 +69,7 @@ def visualize(
         Number of episodes to visualize
     """
     frames = []
-    env = algorithm.env_creator(algorithm.config.env_config)
+    env = algorithm.env_creator(algorithm.config.env_config, algorithm=algorithm, policy_mapping_fn=policy_mapping_fn)
 
     for episode in range(num_episodes):
         print('\n', '-' * 32, '\n', 'Episode', episode, '\n', '-' * 32)
