@@ -26,7 +26,7 @@ class ConstrainedEnv(MultiGridEnv):
             'video.frames_per_second': 50,
             'render_fps': 30,  # Add this line
         }
-      
+      self.in_evaluation_mode = False
       self.algorithm = algorithm  # Add this line
       self.policy_mapping_fn = policy_mapping_fn  # Add this line
 
@@ -111,7 +111,8 @@ class ConstrainedEnv(MultiGridEnv):
             if isinstance(self.grid.get(*self.agents[1].state.pos), Goal):
                   # Move the second agent back to its previous position
                   self.agents[1].state.pos = agent_pos
-                  self.agents[1].state.dir = agent_dir
+                  self.agents[1].state.dir = agent_dir  
+
 
             return obs, rewards, dones, infos
       
@@ -119,18 +120,22 @@ class ConstrainedEnv(MultiGridEnv):
             # Get the current agent
             agent = self.agents[i]
 
-            policies = {agent_id: self.algorithm.get_policy(self.policy_mapping_fn(agent_id)) for agent_id in self.agent_ids}
+            policies = {agent_id: self.algorithm.get_policy(self.policy_mapping_fn(agent_id)) for agent_id in self.agent_ids}srsggpfptsrdppffqwfpgdddjlhnekkmxcvbbzzaqwfpg          
 
             # Check if the agent is the second agent
             reward = 0
-            if i == 1:
+            if i == 1 and self.in_evaluation_mode==False:
                   # Define the reward function for the second agent
                   # For example, give a reward of -1 for each step to encourage the agent to reach the goal as quickly as possible
+                  self.in_evaluation_mode = True
                   env_copy = copy.deepcopy(self)
-                  estimate_entropic_choice_multi_agent(env_copy, policies)
-                  reward = 1 - 0.9 * (self.step_count / self.max_steps)
+                  reward = estimate_entropic_choice_multi_agent(env_copy, policies)
+                  self.in_evaluation_mode = False
+                  
+            elif i ==1 and self.in_evaluation_mode==True:
+                  reward = -1
             else:
                   # Define the reward function for the other agents
                   reward = 1 - 0.9 * (self.step_count / self.max_steps)
 
-            return 
+            return reward

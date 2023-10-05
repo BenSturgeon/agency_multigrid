@@ -60,11 +60,9 @@ def estimate_entropic_choice_multi_agent(env, policies, n_steps=3, n_samples=100
         # Reset to the saved initial state
         env = copy.deepcopy(env_copy)
         
-        # Rollout for n_steps to collect states
-        states = env.reset()
         for _ in range(n_steps):
             actions = {agent_id: policy.compute_single_action(states[agent_id])[0] for agent_id, policy in policies.items()}
-            next_states, _, _, _ = env.step(actions)
+            next_states, _, _, _, _ = env.step(actions)
             
             # Increment state visit frequency for agent '0'
             state_0 = tuple(next_states['0'])
@@ -78,9 +76,9 @@ def estimate_entropic_choice_multi_agent(env, policies, n_steps=3, n_samples=100
     # Calculate entropic choice for agent '0'
     total_samples_0 = sum(state_frequencies_0.values())
     probabilities_0 = np.array(list(state_frequencies_0.values())) / total_samples_0
-    entropic_choice_0 = -np.sum(probabilities_0 * np.log(probabilities_0))
+    entropic_choice = -np.sum(probabilities_0 * np.log(probabilities_0))
     
-    return entropic_choice_0
+    return entropic_choice
 
 
 
