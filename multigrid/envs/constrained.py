@@ -10,8 +10,6 @@ class ConstrainedEnv(MultiGridEnv):
            
    def __init__(
          self,
-         algorithm,  
-         policy_mapping_fn,  
          agent_start_pos = [(1, 1), (5, 3)],
          agent_start_dir = [Direction.right, Direction.right],
          joint_reward: bool = False,

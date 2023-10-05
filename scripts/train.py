@@ -133,7 +133,7 @@ def algorithm_config(
     """
     Return the RL algorithm configuration dictionary.
     """
-    env_config = {**env_config, 'agents': num_agents,  'policy_mapping_fn': get_policy_mapping_fn(None, num_agents)}
+    env_config = {**env_config}
     return (
         get_trainable_cls(algo)
         .get_default_config()
@@ -176,7 +176,7 @@ def train(
     # Also set for the local worker
     trainer.workers.local_worker().foreach_env(lambda env: env.set_algorithm(trainer))
     trainer.workers.local_worker().foreach_env(lambda env: env.set_policy_mapping_fn(config.policy_mapping_fn))
-    
+
     tune.run(
         trainer,
         stop=stop_conditions,
