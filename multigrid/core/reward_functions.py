@@ -52,6 +52,7 @@ def estimate_entropic_choice_multi_agent(env, states, policies, n_steps=3, n_sam
     """
     # Initialize variables to keep track of state visit frequencies for agent '0'
     state_frequencies_0 = {}
+    print("Estimating entropic choice")
     
     # Save the initial state of the environment
     env_copy = copy.deepcopy(env)
@@ -85,5 +86,5 @@ def estimate_entropic_choice_multi_agent(env, states, policies, n_steps=3, n_sam
 
 # Immediate Choice Function
 def immediate_choice(env, policies, n_samples=100):
-    return estimate_entropic_choice(env, policies, n_steps=1, n_samples=n_samples)
+    return estimate_entropic_choice_multi_agent(env, policies, n_steps=1, n_samples=n_samples)
 

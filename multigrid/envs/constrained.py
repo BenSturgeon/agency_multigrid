@@ -127,19 +127,19 @@ class ConstrainedEnv(MultiGridEnv):
             policies = {agent_id: self.algorithm.get_policy(self.policy_mapping_fn(agent_id)) for agent_id in self.agent_ids}          
 
             # Check if the agent is the second agent
-            reward = 0
-            if i == 1 and self.in_evaluation_mode==False:
-                  # Define the reward function for the second agent
-                  # For example, give a reward of -1 for each step to encourage the agent to reach the goal as quickly as possible
-                  self.in_evaluation_mode = True
-                  env_copy = copy.deepcopy(self)
-                  reward = estimate_entropic_choice_multi_agent(env_copy, self.states, policies)
-                  self.in_evaluation_mode = False
+            # reward = 0
+            # if i == 1 and self.in_evaluation_mode==False:
+            #       # Define the reward function for the second agent
+            #       # For example, give a reward of -1 for each step to encourage the agent to reach the goal as quickly as possible
+            #       self.in_evaluation_mode = True
+            #       env_copy = copy.deepcopy(self)
+            #       reward = estimate_entropic_choice_multi_agent(env_copy, self.states, policies)
+            #       self.in_evaluation_mode = False
                   
-            elif i ==1 and self.in_evaluation_mode==True:
-                  reward = -1
-            else:
+            # elif i ==1 and self.in_evaluation_mode==True:
+            #       reward = -1
+            # else:
                   # Define the reward function for the other agents
-                  reward = 1 - 0.9 * (self.step_count / self.max_steps)
+            reward = 1 - 0.9 * (self.step_count / self.max_steps)
 
             return reward
