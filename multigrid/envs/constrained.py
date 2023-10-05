@@ -4,7 +4,7 @@ from multigrid.core.constants import Direction
 from multigrid.core.world_object import Goal, Wall, Door, Key
 import numpy as np
 from multigrid.core.reward_functions import estimate_entropic_choice_multi_agent
-
+import copy
 
 class ConstrainedEnv(MultiGridEnv):
            
@@ -27,8 +27,8 @@ class ConstrainedEnv(MultiGridEnv):
             'render_fps': 30,  # Add this line
         }
       self.in_evaluation_mode = False
-      self.algorithm = algorithm  # Add this line
-      self.policy_mapping_fn = policy_mapping_fn  # Add this line
+      self.algorithm = None
+      self.policy_mapping_fn = None
 
       super().__init__(
       mission_space="get to the green goal square, you rascal",
@@ -44,6 +44,12 @@ class ConstrainedEnv(MultiGridEnv):
       self.step_count = 0
       self.agent_start_pos = agent_start_pos
       self.agent_start_dir = agent_start_dir
+      
+   def set_algorithm(self, algorithm):
+      self.algorithm = algorithm
+
+   def set_policy_mapping_fn(self, policy_mapping_fn):
+      self.policy_mapping_fn = policy_mapping_fn
    
    def _gen_grid(self, width, height):
       """
@@ -105,7 +111,7 @@ class ConstrainedEnv(MultiGridEnv):
                         actions[1] = 'done'  # Replace the 'forward' action with the 'done' action
 
             # Call the step method of the superclass to handle the other actions
-            obs, rewards, dones, infos = super().step(actions)
+            obs, rewards, dones, truncations, infos = super().step(actions)
 
             # Check if the second agent has reached the goal
             if isinstance(self.grid.get(*self.agents[1].state.pos), Goal):
@@ -114,7 +120,7 @@ class ConstrainedEnv(MultiGridEnv):
                   self.agents[1].state.dir = agent_dir  
 
 
-            return obs, rewards, dones, infos
+            return obs, rewards, dones, truncations, infos
       
       def _reward(self, i):
             # Get the current agent
@@ -129,7 +135,7 @@ class ConstrainedEnv(MultiGridEnv):
                   # For example, give a reward of -1 for each step to encourage the agent to reach the goal as quickly as possible
                   self.in_evaluation_mode = True
                   env_copy = copy.deepcopy(self)
-                  reward = estimate_entropic_choice_multi_agent(env_copy, policies)
+                  reward = estimate_entropic_choice_multi_agent(env_copy, self.states, policies)
                   self.in_evaluation_mode = False
                   
             elif i ==1 and self.in_evaluation_mode==True:

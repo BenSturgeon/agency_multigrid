@@ -36,7 +36,7 @@ def discrete_choice(transition_probs, current_state, n_steps):
 
 
 # Modified function for a multi-agent environment, focusing only on agent '0'
-def estimate_entropic_choice_multi_agent(env, policies, n_steps=3, n_samples=100):
+def estimate_entropic_choice_multi_agent(env, states, policies, n_steps=3, n_samples=100):
     """
     Estimate the entropic choice for a given environment and policies for multiple agents using Monte Carlo sampling.
     Only the entropic choice for agent '0' is computed.
