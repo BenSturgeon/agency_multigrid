@@ -167,18 +167,18 @@ def train(
     Train an RLlib algorithm.
     """
     ray.init(num_cpus=(config.num_rollout_workers + 1))
-    trainer = get_trainable_cls(algo)(config=config)
+    # trainer = get_trainable_cls(algo)(config=config)
     
-    for worker in trainer.workers.remote_workers():
-        worker.foreach_env.remote(lambda env: env.set_algorithm(trainer))
-        worker.foreach_env.remote(lambda env: env.set_policy_mapping_fn(config.policy_mapping_fn))
+    # for worker in trainer.workers.remote_workers():
+    #     worker.foreach_env.remote(lambda env: env.set_algorithm(trainer))
+    #     worker.foreach_env.remote(lambda env: env.set_policy_mapping_fn(config.policy_mapping_fn))
 
-    # Also set for the local worker
-    trainer.workers.local_worker().foreach_env(lambda env: env.set_algorithm(trainer))
-    trainer.workers.local_worker().foreach_env(lambda env: env.set_policy_mapping_fn(config.policy_mapping_fn))
+    # # Also set for the local worker
+    # trainer.workers.local_worker().foreach_env(lambda env: env.set_algorithm(trainer))
+    # trainer.workers.local_worker().foreach_env(lambda env: env.set_policy_mapping_fn(config.policy_mapping_fn))
 
     tune.run(
-        trainer,
+        algo,
         stop=stop_conditions,
         config=config,
         local_dir=save_dir,
