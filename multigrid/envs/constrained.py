@@ -120,7 +120,7 @@ class ConstrainedEnv(MultiGridEnv):
             # Get the current agent
             agent = self.agents[i]
 
-            policies = {agent_id: self.algorithm.get_policy(self.policy_mapping_fn(agent_id)) for agent_id in self.agent_ids}srsggpfptsrdppffqwfpgdddjlhnekkmxcvbbzzaqwfpg          
+            policies = {agent_id: self.algorithm.get_policy(self.policy_mapping_fn(agent_id)) for agent_id in self.agent_ids}          
 
             # Check if the agent is the second agent
             reward = 0
