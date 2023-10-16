@@ -24,13 +24,11 @@ class ConstrainedEnv(MultiGridEnv):
             'video.frames_per_second': 50,
             'render_fps': 30,  # Add this line
         }
-      self.in_evaluation_mode = False
-      self.algorithm = None
-      self.policy_mapping_fn = None
+      
+
 
       super().__init__(
       mission_space="get to the green goal square, you rascal",
-      
       width = 10,
       height = 5,
       max_steps= max_steps,
@@ -43,11 +41,6 @@ class ConstrainedEnv(MultiGridEnv):
       self.agent_start_pos = agent_start_pos
       self.agent_start_dir = agent_start_dir
       
-   def set_algorithm(self, algorithm):
-      self.algorithm = algorithm
-
-   def set_policy_mapping_fn(self, policy_mapping_fn):
-      self.policy_mapping_fn = policy_mapping_fn
    
    def _gen_grid(self, width, height):
       """
@@ -124,7 +117,7 @@ class ConstrainedEnv(MultiGridEnv):
             # Get the current agent
             agent = self.agents[i]
 
-            policies = {agent_id: self.algorithm.get_policy(self.policy_mapping_fn(agent_id)) for agent_id in self.agent_ids}          
+            # policies = {agent_id: self.algorithm.get_policy(self.policy_mapping_fn(agent_id)) for agent_id in self.agent_ids}          
 
             # Check if the agent is the second agent
             # reward = 0
