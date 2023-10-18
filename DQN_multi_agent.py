@@ -11,7 +11,7 @@ import matplotlib.animation as animation
 from tqdm import tqdm
 import torch.nn as nn
 from itertools import count
-from features_extractor import MinigridFeaturesExtractor
+from features_extractor import MultiAgentMinigridFeaturesExtractor
 
 import torch as T
 from torch import optim
@@ -29,19 +29,6 @@ plt.ion()
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class network(nn.Module):
-    def __init__(self, n_observations, n_actions, fc1_dims=256, fc2_dims=256):
-        super(network, self).__init__()
-        self.layer1 = nn.Linear(n_observations, fc1_dims)
-        self.layer2 = nn.Linear(fc1_dims, fc2_dims)
-        self.layer3 = nn.Linear(fc2_dims, n_actions)
-
-    # Called with either one element to determine next action, or a batch
-    # during optimization. Returns tensor([[left0exp,right0exp]...]).
-    def forward(self, x):
-        x = F.relu(self.layer1(x))
-        x = F.relu(self.layer2(x))
-        return self.layer3(x)
     
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
@@ -63,13 +50,14 @@ class replay_memory(object):
     
 class Agent():
     def __init__(self, env) -> None:
-        n_actions = env.action_space.n
+        n_actions = env.action_space[0].n
         state, info = env.reset()
         n_observations = len(state)
-        n_actions = env.action_space.n
+
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
-        self.policy_network =  MinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
-        self.target_network = MinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
+        print(env.observation_space)
+        self.policy_network =  MultiAgentMinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
+        self.target_network = MultiAgentMinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
         self.memory = replay_memory(100000)
         self.steps_done = 0
