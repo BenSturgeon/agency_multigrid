@@ -15,7 +15,7 @@ class MultiAgentMinigridFeaturesExtractor(BaseFeaturesExtractor):
         n_input_channels = agent_obs_space.shape[0]
 
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 16, (2, 2)),
+            nn.Conv2d(n_input_channels, 16, (5, 1)),
             nn.ReLU(),
             nn.Conv2d(16, 32, (2, 2)),
             nn.ReLU(),

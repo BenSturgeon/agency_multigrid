@@ -49,7 +49,7 @@ class replay_memory(object):
         return len(self.memory)
     
 class Agent():
-    def __init__(self, env) -> None:
+    def __init__(self, env, target_agent=0) -> None:
         n_actions = env.action_space[0].n
         state, info = env.reset()
         n_observations = len(state)
@@ -80,6 +80,8 @@ class Agent():
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.LR, amsgrad=True)
         
         self.chkpt_file = 'tmp/lunar_lander'
+        self.target_agent=target_agent
+        self.num_agents = len(env.agents)
 
 
     
@@ -212,45 +214,50 @@ class Agent():
     
     def train(self, num_episodes, env):
         
+
         pbar = tqdm(range(1,num_episodes))
         for i_episode in pbar:
             # Initialize the environment and get it's state
             state, info = env.reset()
-            state = torch.tensor(state['image'], dtype=torch.float32, device=device).unsqueeze(0)
+            state = torch.tensor(state[0]['image'], dtype=torch.float32, device=device).unsqueeze(0)
             accumulated_reward = 0
+
             for t in count():
-                action = self.select_action(state)
-                observation, reward, terminated, truncated, _ = env.step(action.item())
-                accumulated_reward += reward
-                reward = torch.tensor([reward], device=device)
-                done = terminated or truncated
+                for agent in range(self.num_agents):
+                    if agent == self.target_agent:
 
-                if terminated:
-                    next_state = None
-                else:
-                    next_state = torch.tensor(observation['image'], dtype=torch.float32, device=device).unsqueeze(0)
+                        action = self.select_action(state[self.target_agent])
+                        observation, reward, terminated, truncated, _ = env.step(action.item(),)
+                        accumulated_reward += reward
+                        reward = torch.tensor([reward], device=device)
+                        done = terminated or truncated
 
-                # Store the transition in memory
-                self.memory.push(state, action, next_state, reward)
+                        if terminated:
+                            next_state = None
+                        else:
+                            next_state = torch.tensor(observation[self.target_agent]['image'], dtype=torch.float32, device=device).unsqueeze(0)
 
-                # Move to the next state
-                state = next_state
+                        # Store the transition in memory
+                        self.memory.push(state, action, next_state, reward)
 
-                # Perform one step of the optimization (on the policy network)
-                self.optimize_model()
+                        # Move to the next state
+                        state = next_state
 
-                # Soft update of the target network's weights
-                # θ′ ← τ θ + (1 −τ )θ′
-                target_net_state_dict = self.target_network.state_dict()
-                policy_net_state_dict = self.policy_network.state_dict()
-                for key in policy_net_state_dict:
-                    target_net_state_dict[key] = policy_net_state_dict[key]*self.tau + target_net_state_dict[key]*(1-self.tau)
-                self.target_network.load_state_dict(target_net_state_dict)
+                        # Perform one step of the optimization (on the policy network)
+                        self.optimize_model()
 
-                if done:
-                    self.episode_rewards.append(accumulated_reward)
-                    self.episode_durations.append(t + 1)
-                    break
+                        # Soft update of the target network's weights
+                        # θ′ ← τ θ + (1 −τ )θ′
+                        target_net_state_dict = self.target_network.state_dict()
+                        policy_net_state_dict = self.policy_network.state_dict()
+                        for key in policy_net_state_dict:
+                            target_net_state_dict[key] = policy_net_state_dict[key]*self.tau + target_net_state_dict[key]*(1-self.tau)
+                        self.target_network.load_state_dict(target_net_state_dict)
+
+                        if done:
+                            self.episode_rewards.append(accumulated_reward)
+                            self.episode_durations.append(t + 1)
+                            break
 
         print('Complete')
         self.plot_durations()
