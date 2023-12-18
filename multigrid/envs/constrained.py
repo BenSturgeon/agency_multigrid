@@ -22,7 +22,7 @@ class ConstrainedEnv(MultiGridEnv):
       self.metadata = {
             'render.modes': ['human', 'rgb_array'],
             'video.frames_per_second': 50,
-            'render_fps': 30,  # Add this line
+            'render_fps': 30, 
         }
       
 
