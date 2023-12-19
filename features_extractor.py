@@ -10,8 +10,8 @@ class MultiAgentMinigridFeaturesExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.Space, features_dim: int = 512, normalized_image: bool = False) -> None:
         super().__init__(observation_space, features_dim)
 
-        # Assume all agents have the same observation space
-        agent_obs_space = observation_space.spaces[0]['image']
+        # Get the observation space
+        agent_obs_space = observation_space[0]['image']
         n_input_channels = agent_obs_space.shape[0]
 
         self.cnn = nn.Sequential(
@@ -24,24 +24,17 @@ class MultiAgentMinigridFeaturesExtractor(BaseFeaturesExtractor):
             nn.Flatten(),
         )
 
-        # Determine the number of agents
-        num_agents = len(observation_space.spaces)
-
-        # Compute shape by doing one forward pass with simulated stacked observations
+        # Compute shape by doing one forward pass with a simulated observation
         with torch.no_grad():
-            # Create a simulated stacked observation for all agents
+            # Create a simulated observation
             sample_obs = agent_obs_space.sample()
-            stacked_sample_obs = torch.stack([torch.as_tensor(sample_obs).float() for _ in range(num_agents)])
-
-            n_flatten = self.cnn(stacked_sample_obs.unsqueeze(1)).shape[1]
+            n_flatten = self.cnn(torch.as_tensor(sample_obs).float().unsqueeze(0)).shape[1]
 
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
         
-    def forward(self, observations: Dict[int, Dict[str, torch.Tensor]]) -> torch.Tensor:
-        # Extract image observations for each agent and pass through CNN
-        for obs_dict in observations:
-            print(obs_dict)
-        image_obs = torch.stack([obs_dict['image'] for obs_dict in observations.values()])
+    def forward(self, observation: Dict[str, torch.Tensor]) -> torch.Tensor:
+        # Extract image observation and pass through CNN
+        image_obs = observation['image'].unsqueeze(0)
         cnn_out = self.cnn(image_obs)
 
         # Pass CNN output through linear layer
