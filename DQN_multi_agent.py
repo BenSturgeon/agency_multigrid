@@ -50,14 +50,15 @@ class replay_memory(object):
     
 class Agent():
     def __init__(self, env, target_agent=0) -> None:
+        
         n_actions = env.action_space[0].n
         state, info = env.reset()
         n_observations = len(state)
-
+        self.env= env
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         print(env.observation_space)
-        self.policy_network =  MultiAgentMinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
-        self.target_network = MultiAgentMinigridFeaturesExtractor(env.observation_space, n_actions).to(self.device)
+        self.policy_network =  MultiAgentMinigridFeaturesExtractor(self.env.observation_space, n_actions).to(self.device)
+        self.target_network = MultiAgentMinigridFeaturesExtractor(self.env.observation_space, n_actions).to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
         self.memory = replay_memory(100000)
         self.steps_done = 0
@@ -81,7 +82,8 @@ class Agent():
         
         self.chkpt_file = 'tmp/lunar_lander'
         self.target_agent=target_agent
-        self.num_agents = len(env.agents)
+        self.num_agents = len(self.env.agents)
+        
 
 
     
@@ -100,7 +102,7 @@ class Agent():
             with T.no_grad():
                 return self.policy_network(state).to(self.device).max(1)[1].view(1, 1)
         else:
-            return T.tensor([[env.action_space.sample()]], device=self.device, dtype=T.long)
+            return T.tensor([[self.env.action_space.sample()]], device=self.device, dtype=T.long)
 
     def plot_durations(self, show_result=False):
         plt.figure(2)
@@ -187,7 +189,12 @@ class Agent():
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_network
-        state_action_values = self.policy_network(state_batch).gather(1, action_batch)
+        state_action_values = []
+        for agent_state in state_batch:
+            agent_state_action_values = self.policy_network(agent_state).gather(1, action_batch)
+            state_action_values.append(agent_state_action_values)
+        state_action_values = T.cat(state_action_values)
+        # state_action_values = self.policy_network(state_batch).gather(1, action_batch)
 
         # Compute V(s_{t+1}) for all next states.
         # Expected values of actions for non_final_next_states are computed based
@@ -212,13 +219,13 @@ class Agent():
         self.optimizer.step()
 
     
-    def train(self, num_episodes, env):
+    def train(self, num_episodes):
         
 
         pbar = tqdm(range(1,num_episodes))
         for i_episode in pbar:
-            # Initialize the environment and get it's state
-            state, info = env.reset()
+            # Initialize the self.environment and get it's state
+            state, info = self.env.reset()
             state = torch.tensor(state[0]['image'], dtype=torch.float32, device=device).unsqueeze(0)
             accumulated_reward = 0
 
@@ -227,7 +234,7 @@ class Agent():
                     if agent == self.target_agent:
 
                         action = self.select_action(state[self.target_agent])
-                        observation, reward, terminated, truncated, _ = env.step(action.item(),)
+                        observation, reward, terminated, truncated, _ = self.env.step(action.item(),)
                         accumulated_reward += reward
                         reward = torch.tensor([reward], device=device)
                         done = terminated or truncated
@@ -271,16 +278,16 @@ class Agent():
         plt.show()
     
     # Run episode
-    def run_episode(self, env, num_episodes=1):
+    def run_episode(self,  num_episodes=1):
         total_reward = []
         for episode in range(num_episodes):
             episode_reward = 0
-            state, info = env.reset()
+            state, info = self.env.reset()
             state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
             terminated = False
             while not terminated: 
                 action = self.select_action(state)
-                observation, reward, terminated, truncated, _ = env.step(action.item())
+                observation, reward, terminated, truncated, _ = self.env.step(action.item())
                 episode_reward += reward
             total_reward.append(episode_reward)
 

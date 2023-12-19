@@ -24,14 +24,23 @@ class MultiAgentMinigridFeaturesExtractor(BaseFeaturesExtractor):
             nn.Flatten(),
         )
 
-        # Compute shape by doing one forward pass
+        # Determine the number of agents
+        num_agents = len(observation_space.spaces)
+
+        # Compute shape by doing one forward pass with simulated stacked observations
         with torch.no_grad():
-            n_flatten = self.cnn(torch.as_tensor(agent_obs_space.sample()[None]).float()).shape[1]
+            # Create a simulated stacked observation for all agents
+            sample_obs = agent_obs_space.sample()
+            stacked_sample_obs = torch.stack([torch.as_tensor(sample_obs).float() for _ in range(num_agents)])
+
+            n_flatten = self.cnn(stacked_sample_obs.unsqueeze(1)).shape[1]
 
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
-
+        
     def forward(self, observations: Dict[int, Dict[str, torch.Tensor]]) -> torch.Tensor:
         # Extract image observations for each agent and pass through CNN
+        for obs_dict in observations:
+            print(obs_dict)
         image_obs = torch.stack([obs_dict['image'] for obs_dict in observations.values()])
         cnn_out = self.cnn(image_obs)
 
