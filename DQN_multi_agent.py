@@ -102,7 +102,7 @@ class Agent():
             with T.no_grad():
                 return self.policy_network(state).to(self.device).max(1)[1].view(1, 1)
         else:
-            return T.tensor([[self.env.action_space.sample()]], device=self.device, dtype=T.long)
+            return T.tensor([self.env.action_space.sample()], device=self.device, dtype=T.long)
 
     def plot_durations(self, show_result=False):
         plt.figure(2)

@@ -24,19 +24,17 @@ class MultiAgentMinigridFeaturesExtractor(BaseFeaturesExtractor):
             nn.Flatten(),
         )
 
-        # Compute shape by doing one forward pass with a simulated observation
+
         with torch.no_grad():
-            # Create a simulated observation
             sample_obs = agent_obs_space.sample()
             n_flatten = self.cnn(torch.as_tensor(sample_obs).float().unsqueeze(0)).shape[1]
 
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
         
     def forward(self, observation: Dict[str, torch.Tensor]) -> torch.Tensor:
-        # Extract image observation and pass through CNN
+
         image_obs = observation['image'].unsqueeze(0)
         cnn_out = self.cnn(image_obs)
 
-        # Pass CNN output through linear layer
         return self.linear(cnn_out)
 
