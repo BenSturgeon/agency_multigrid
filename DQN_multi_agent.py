@@ -57,8 +57,8 @@ class Agent():
         self.env= env
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         print(env.observation_space)
-        self.policy_network =  MinigridFeaturesExtractor(self.env.observation_space, n_actions).to(self.device)
-        self.target_network = MinigridFeaturesExtractor(self.env.observation_space, n_actions).to(self.device)
+        self.policy_network =  MinigridFeaturesExtractor(self.env.observation_space, features_dim=n_actions).to(self.device)
+        self.target_network = MinigridFeaturesExtractor(self.env.observation_space, features_dim=n_actions).to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
         self.memory = replay_memory(100000)
         self.steps_done = 0
