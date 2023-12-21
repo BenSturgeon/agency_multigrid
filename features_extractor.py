@@ -9,7 +9,6 @@ from typing import Dict
 class MinigridFeaturesExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.Space, features_dim: int = 512, normalized_image: bool = False) -> None:
         super().__init__(observation_space, features_dim)
-        print(observation_space)
         n_input_channels = observation_space.shape[0]
         self.cnn = nn.Sequential(
             nn.Conv2d(n_input_channels, 16, (2, 2)),
