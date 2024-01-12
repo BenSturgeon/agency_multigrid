@@ -7,11 +7,10 @@ from typing import Dict
 
 
 class MinigridFeaturesExtractor(BaseFeaturesExtractor):
-    def __init__(self, observation_space: gym.Space, features_dim: int = 512, normalized_image: bool = False) -> None:
+    def __init__(self, observation_space: gym.Space, features_dim: int = 64, normalized_image: bool = False) -> None:
         super().__init__(observation_space, features_dim)
-        n_input_channels = observation_space.shape[0]
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 16, (2, 2)),
+            nn.Conv2d(3, 16, (2, 2)),
             nn.ReLU(),
             nn.Conv2d(16, 32, (2, 2)),
             nn.ReLU(),
@@ -20,12 +19,26 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
             nn.Flatten(),
         )
 
-        # Compute shape by doing one forward pass
-        with torch.no_grad():
-            n_flatten = self.cnn(torch.as_tensor(observation_space.sample()[None]).float()).shape[1]
+        print(observation_space)
+        
+        n = observation_space.shape[0]
+        m = observation_space.shape[1]
+        print(n,m)
+        self.image_embedding_size = ((n-1)//2-2)*((m-1)//2-2)*64
 
-        self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
+
+        # Compute shape by doing one forward pass
+        tens= torch.as_tensor(observation_space.sample()[None]).float()
+        print(tens.shape)
+        tens = torch.tensor(tens).float().permute(0,3,1,2)
+        with torch.no_grad():
+            n_flatten = self.cnn(tens).shape[1]
+        print(features_dim, self.image_embedding_size)
+        lin = nn.Linear(n_flatten, features_dim)
+        self.linear = nn.Sequential(lin, nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        
+        print(f"from_forward{observations.shape}")
+        observations = torch.Tensor(observations)
         return self.linear(self.cnn(observations))
-
