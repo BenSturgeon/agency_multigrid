@@ -64,45 +64,29 @@ class PolicyNetwork(nn.Module):
         action_probs = F.softmax(self.fc3(x), dim=1)
         return action_probs
 
-class Agent():
-    def __init__(self, env, target_agent=0) -> None:
-        
-        n_actions = env.action_space.n
-        state, info = env.reset()
-        n_observations = len(state)
-        self.env= env
-        self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
-        print(env.observation_space)
-        self.policy_network = PolicyNetwork(input_dims=64, n_actions=n_actions).to(self.device)
-        self.target_network = PolicyNetwork(input_dims=64, n_actions=n_actions).to(self.device)
+
+class Agent(object):
+    def __init__(self, input_dims, n_actions,  device, env, label, LR=0.001, gamma=0.99, eps_start=0.9, eps_end=0.05, eps_decay=1000, tau=0.005):
+        self.policy_network = PolicyNetwork(input_dims, n_actions).to(device)
+        self.target_network = PolicyNetwork(input_dims, n_actions).to(device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
         self.memory = replay_memory(100000)
         self.steps_done = 0
-        self.batch_size = 128
-        self.episode_durations = []
-        self.loss_record = []
-        self.episode_rewards = []
-
-        self.gamma = 0.99
-        self.eps_start = 0.9
-        self.eps_end = 0.05
-        self.eps_decay = 1000
-        self.tau = 0.005
-        self.LR = 0.001
-
-        self.max_score = -math.inf
-        self.min_score = math.inf
-        self.avg_score = 0
-
+        self.gamma = gamma
+        self.eps_start = eps_start
+        self.eps_end = eps_end
+        self.eps_decay = eps_decay
+        self.tau = tau
+        self.LR = LR
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.LR, amsgrad=True)
-        
-        self.chkpt_file = 'tmp/lunar_lander'
-        self.target_agent=target_agent
-        self.num_agents = len(self.env.agents)
-        
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.batch_size = 32
+        self.env = env
+        self.label = label
+        self.feature_extractor = MinigridFeaturesExtractor(env.observation_space[self.label], features_dim=64)
+        self.current_state = None
 
 
-    
     def save_checkpoint(self):
         T.save(self.policy_network.state_dict(), self.chkpt_file)
 
@@ -120,68 +104,40 @@ class Agent():
                 action_probs = self.policy_network(feature_vector)
                 return self.policy_network(action_probs).to(self.device).max(1)[1].view(1, 1)
         else:
-            return T.tensor([self.env.action_space.sample()], device=self.device, dtype=T.long)
+            return T.tensor([self.env.action_space[self.label].sample()], device=self.device, dtype=T.long)
 
-    def plot_durations(self, show_result=False):
-        plt.figure(2)
-        plt.clf()
-        durations_t = T.tensor(self.episode_durations, dtype=T.float)
-        plt.title('Training...')
-        plt.xlabel('Episode')
-        plt.ylabel('Duration')
-        plt.plot(durations_t.numpy())
+    def process_step(self, action, observation, reward, done):
+        next_state = self.feature_extractor(observation)
 
-        # Take 100 episode averages and plot them too
-        if len(durations_t) >= 100:
-            means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-            means = T.cat((T.zeros(99), means))
-            plt.plot(means.numpy())
+        # Convert the necessary components to tensors
+        action_tensor = torch.tensor([action], device=self.device, dtype=torch.long)
+        reward_tensor = torch.tensor([reward], device=self.device, dtype=torch.float)
+        new_state_tensor = torch.tensor(observation, device=self.device, dtype=torch.float).unsqueeze(0)
+        next_states = feature_extractor(next_states_tensor)
 
-        plt.pause(0.001)
-        if is_ipython:
-            if not show_result:
-                display.display(plt.gcf())
-                # display.clear_output(wait=True)
-        else:
-            display.display(plt.gcf())
+        # Store the transition in memory
+        self.memory.push(self.current_state, action_tensor, next_states, reward_tensor)
 
-    def plot_rewards(self, show_result=False):
-        plt.figure(2)
-        plt.clf()
-        rewards_t = T.tensor(self.episode_rewards, dtype=T.float)
-        plt.title('Training...')
-        plt.xlabel('Episode')
-        plt.ylabel('Reward')
-        plt.plot(rewards_t.numpy())
+        # Update the current state
+        self.current_state = next_states
 
-        # Take 100 episode averages and plot them too
-        if len(rewards_t) >= 100:
-            means = rewards_t.unfold(0, 100, 1).mean(1).view(-1)
-            means = T.cat((T.zeros(99), means))
-            plt.plot(means.numpy())
+        # Perform optimization if the memory is sufficiently populated
+        if len(self.memory) > self.batch_size:
+            self.optimize_model()
 
-        plt.pause(0.001)
-        if is_ipython:
-            if not show_result:
-                display.display(plt.gcf())
-                # display.clear_output(wait=True)
-        else:
-            display.display(plt.gcf())
+        # If the episode is done, reset the current state
+        if done:
+            self.current_state = None  # Or set to initial state based on your environment
 
-    def plot_loss(self, show_result=False):
-        plt.figure(2)
-        plt.clf()
-        loss_t = T.tensor(self.loss_record, dtype=T.float)
-        plt.title('Training...')
-        plt.xlabel('Step')
-        plt.ylabel('Loss')
-        plt.plot(loss_t.numpy())
-        plt.pause(0.001)
-        if is_ipython:
-            display.display(plt.gcf())
-            # display.clear_output(wait=True)
-        else:
-            display.display(plt.gcf())
+        # Soft update the target network
+        self.soft_update_target_network()
+    
+    def soft_update_target_network(self):
+        for target_param, param in zip(self.target_network.parameters(), self.policy_network.parameters()):
+            target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
+
+            
+ 
 
         
     def optimize_model(self):
@@ -236,64 +192,62 @@ class Agent():
         T.nn.utils.clip_grad_value_(self.policy_network.parameters(), 100)
         self.optimizer.step()
 
+class MultiAgentSystem:
+    def __init__(self, env, num_agents, device):
+        self.env = env
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.num_agents = num_agents
+        self.agents = [Agent(input_dims=64, n_actions=env.action_space[0].n, device=self.device, env=env, label=i) for i in range(num_agents)]
+        self.episode_durations = []
+        self.loss_record = []
+        self.episode_rewards = []
+        self.max_score = -math.inf
+        self.min_score = math.inf
+        self.avg_score = 0
+    
+    def collect_actions(self, states):
+        actions = {}
+        for agent_id, (agent, state) in enumerate(zip(self.agents, states)):
+            action = agent.select_action(state)
+            actions[agent_id] = action
+        return actions
+    
+    def optimise_models(self):
+        for agent in self.agents:
+            agent.optimize_model()
     
     def train(self, num_episodes):
-        
-
         pbar = tqdm(range(1,num_episodes))
         for i_episode in pbar:
             # Initialize the self.environment and get it's state
-            state, info = self.env.reset()
-            state = torch.tensor(state[0]['image'], dtype=torch.float32, device=device).unsqueeze(0)
+            states, info = self.env.reset()
             accumulated_reward = 0
 
             for t in count():
-                for agent in range(self.num_agents):
-                    if agent == self.target_agent:
 
-                        action = self.select_action(state[self.target_agent])
-                        observation, reward, terminated, truncated, _ = self.env.step(action.item(),)
-                        accumulated_reward += reward
-                        reward = torch.tensor([reward], device=device)
-                        done = terminated or truncated
+                actions = self.collect_actions(states)
+                observation, reward, terminated, truncated, _ = self.env.step(actions)
+                for agent in self.agents:
+                    action = actions[agent.label]
+                    accumulated_reward += reward[agent.label]
+                    reward = reward[agent.label]
+                    done = terminated or truncated
 
-                        if terminated:
-                            next_state = None
-                        else:
-                            next_state = torch.tensor(observation[self.target_agent]['image'], dtype=torch.float32, device=device).unsqueeze(0)
+                    if terminated:
+                        next_state = None
+                    else:
+                        next_state = observation[agent.label]
 
-                        # Store the transition in memory
-                        self.memory.push(state, action, next_state, reward)
+                    states = next_state
 
-                        # Move to the next state
-                        state = next_state
+                    agent.process_step(action, next_state, reward, done)
 
-                        # Perform one step of the optimization (on the policy network)
-                        self.optimize_model()
+                    if done:
+                        self.episode_rewards.append(accumulated_reward)
+                        self.episode_durations.append(t + 1)
+                        break
 
-                        # Soft update of the target network's weights
-                        # θ′ ← τ θ + (1 −τ )θ′
-                        target_net_state_dict = self.target_network.state_dict()
-                        policy_net_state_dict = self.policy_network.state_dict()
-                        for key in policy_net_state_dict:
-                            target_net_state_dict[key] = policy_net_state_dict[key]*self.tau + target_net_state_dict[key]*(1-self.tau)
-                        self.target_network.load_state_dict(target_net_state_dict)
 
-                        if done:
-                            self.episode_rewards.append(accumulated_reward)
-                            self.episode_durations.append(t + 1)
-                            break
-
-        print('Complete')
-        self.plot_durations()
-        plt.ioff()
-        plt.show()
-        self.plot_loss()
-        plt.ioff()
-        plt.show()
-        self.plot_rewards()
-        plt.ioff()
-        plt.show()
     
     # Run episode
     def run_episode(self,  num_episodes=1):
@@ -313,11 +267,7 @@ class Agent():
 
 
 
-if __name__ == "__main__":
-    env = gym.make("MiniGrid-Empty-6x6-v0", render_mode="rgb_array")
-    agent = Agent(env)
-    agent.train(20,env)
-    print("we did it")
+
 
 
 
