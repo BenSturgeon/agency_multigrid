@@ -47,18 +47,34 @@ class replay_memory(object):
 
     def __len__(self):
         return len(self.memory)
-    
+
+
+class PolicyNetwork(nn.Module):
+    def __init__(self, input_dims, n_actions):
+        super(PolicyNetwork, self).__init__()
+        # Define network layers
+        self.fc1 = nn.Linear(input_dims, 128) # First hidden layer
+        self.fc2 = nn.Linear(128, 128)        # Second hidden layer
+        self.fc3 = nn.Linear(128, n_actions)  # Output layer
+
+    def forward(self, state):
+        # Forward pass through the network
+        x = F.relu(self.fc1(state))
+        x = F.relu(self.fc2(x))
+        action_probs = F.softmax(self.fc3(x), dim=1)
+        return action_probs
+
 class Agent():
     def __init__(self, env, target_agent=0) -> None:
         
-        n_actions = env.action_space[0].n
+        n_actions = env.action_space.n
         state, info = env.reset()
         n_observations = len(state)
         self.env= env
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         print(env.observation_space)
-        self.policy_network =  MinigridFeaturesExtractor(self.env.observation_space, features_dim=n_actions).to(self.device)
-        self.target_network = MinigridFeaturesExtractor(self.env.observation_space, features_dim=n_actions).to(self.device)
+        self.policy_network = PolicyNetwork(input_dims=64, n_actions=n_actions).to(self.device)
+        self.target_network = PolicyNetwork(input_dims=64, n_actions=n_actions).to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
         self.memory = replay_memory(100000)
         self.steps_done = 0
@@ -100,7 +116,9 @@ class Agent():
         self.steps_done += 1
         if sample > eps_threshold:
             with T.no_grad():
-                return self.policy_network(state).to(self.device).max(1)[1].view(1, 1)
+                feature_vector = self.feature_extractor(state).view(-1, 64)
+                action_probs = self.policy_network(feature_vector)
+                return self.policy_network(action_probs).to(self.device).max(1)[1].view(1, 1)
         else:
             return T.tensor([self.env.action_space.sample()], device=self.device, dtype=T.long)
 

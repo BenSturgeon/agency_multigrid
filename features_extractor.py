@@ -29,16 +29,12 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
 
         # Compute shape by doing one forward pass
         tens= torch.as_tensor(observation_space.sample()[None]).float()
-        print(tens.shape)
         tens = torch.tensor(tens).float().permute(0,3,1,2)
         with torch.no_grad():
             n_flatten = self.cnn(tens).shape[1]
-        print(features_dim, self.image_embedding_size)
         lin = nn.Linear(n_flatten, features_dim)
         self.linear = nn.Sequential(lin, nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        
-        print(f"from_forward{observations.shape}")
         observations = torch.Tensor(observations)
         return self.linear(self.cnn(observations))
